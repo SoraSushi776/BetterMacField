@@ -234,7 +234,7 @@ static NSTextField *label(NSString *text,CGFloat size,BOOL bold) {
     NSView *root=self.window.contentView;
     NSTextField *title=label(@"BetterMacField",26,YES);title.frame=NSMakeRect(28,604,450,36);[root addSubview:title];
     NSTextField *sub=label(@"终末地 · macOS 增强工具",13,NO);sub.textColor=NSColor.secondaryLabelColor;sub.frame=NSMakeRect(30,577,580,22);[root addSubview:sub];
-    self.regions=[[NSPopUpButton alloc] initWithFrame:NSMakeRect(570,604,180,30) pullsDown:NO];[self.regions addItemsWithTitles:@[@"国际服 · 1.6.3",@"国服 · 1.6.3"]];
+    self.regions=[[NSPopUpButton alloc] initWithFrame:NSMakeRect(570,604,180,30) pullsDown:NO];[self.regions addItemsWithTitles:@[@"国际服 · 1.6.3",@"国服 · 1.7.2"]];
     self.regions.target=self;self.regions.action=@selector(regionChanged:);[root addSubview:self.regions];
     if(![[NSUserDefaults.standardUserDefaults stringForKey:@"SelectedRegion"] isEqual:@"global"])[self.regions selectItemAtIndex:1];
     NSTabView *tabs=[[NSTabView alloc] initWithFrame:NSMakeRect(24,136,732,432)];[root addSubview:tabs];
@@ -394,7 +394,7 @@ int main(int argc,const char **argv) {
                 if(force)fprintf(stderr,"已按 --force 继续，忽略游戏版本匹配提示。\n");
                 if(check){
                     if(force)puts("Packaged components verified; client compatibility override enabled.");
-                    else printf("Verified %s 1.6.3 and all packaged graphics programs.\n",region.UTF8String);
+                    else printf("Verified %s %s and all packaged graphics programs.\n",region.UTF8String,[packageInfo()[@"clients"][region][@"version"] UTF8String]);
                     return 0;
                 }
                 stopClient(region,[args containsObject:@"--restart"]);

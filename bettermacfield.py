@@ -17,6 +17,8 @@ import uuid
 ROOT = Path(__file__).resolve().parent
 DEFAULT_APP = Path.home() / 'Library/Containers/io.playcover.PlayCover/Applications/com.gryphline.endfield.ios.app'
 CLIENTS = {'global': 'com.gryphline.endfield.ios', 'cn': 'com.hypergryph.endfield'}
+# Supported client versions per region; CN moved to 1.7.2, global stays at 1.6.3.
+CLIENT_VERSIONS = {'global': '1.6.3', 'cn': '1.7.2'}
 BUILD = ROOT / 'build'
 LIBRARY = BUILD / 'libBetterMacField.dylib'
 STATE = Path.home() / 'Library/Application Support/BetterMacField'
@@ -33,8 +35,11 @@ def validate(app):
         raise RuntimeError('This release requires an Apple Silicon Mac and native arm64 Python.')
     info = plistlib.loads((app/'Info.plist').read_bytes())
     bundle = info.get('CFBundleIdentifier')
-    if bundle not in CLIENTS.values() or info.get('CFBundleShortVersionString') != '1.6.3':
-        raise RuntimeError('Supported clients: global/CN iOS 1.6.3 only.')
+    region = next((r for r, b in CLIENTS.items() if b == bundle), None)
+    expected = CLIENT_VERSIONS.get(region) if region else None
+    if expected is None or info.get('CFBundleShortVersionString') != expected:
+        raise RuntimeError('Supported clients: global iOS %s / CN iOS %s only.'
+                           % (CLIENT_VERSIONS['global'], CLIENT_VERSIONS['cn']))
     dependencies = subprocess.check_output(['xcrun', 'otool', '-L', str(app/'Endfield')], text=True)
     if 'PlayTools.framework/PlayTools' not in dependencies:
         raise RuntimeError('Install this client through PlayCover with PlayTools first.')

@@ -47,7 +47,7 @@ class LauncherBoundaries(unittest.TestCase):
             app = Path(folder)
             (app/'Info.plist').write_bytes(plistlib.dumps(dict(CFBundleIdentifier='com.gryphline.endfield.ios', CFBundleShortVersionString='9.9.9')))
             with patch.object(bmf.platform, 'system', return_value='Darwin'), patch.object(bmf.platform, 'machine', return_value='arm64'):
-                with self.assertRaisesRegex(RuntimeError, '1.6.3 only'):
+                with self.assertRaisesRegex(RuntimeError, '1.6.3.*1.7.2 only'):
                     bmf.validate(app)
 
     def test_single_restore_record_preserves_original_and_later_user_changes(self):

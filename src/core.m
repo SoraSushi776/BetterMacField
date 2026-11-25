@@ -9,12 +9,33 @@
 #include <simd/simd.h>
 #include <dlfcn.h>
 #include <stdatomic.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 static FILE *output;
 static bool probe_cn_client;
+// Sandboxed PlayCover strips custom env vars; resolve the container runtime dir.
+static NSString *default_runtime_root(void) {
+    NSString *home=NSHomeDirectory() ?: [@"~" stringByExpandingTildeInPath];
+    NSString *bundle=NSBundle.mainBundle.bundleIdentifier ?: @"com.hypergryph.endfield";
+    if([home hasSuffix:[NSString stringWithFormat:@"Containers/%@/Data",bundle]])
+        return [home stringByAppendingPathComponent:@"tmp/BetterMacField"];
+    return [home stringByAppendingPathComponent:
+        [NSString stringWithFormat:@"Library/Containers/%@/Data/tmp/BetterMacField",bundle]];
+}
+static void ensure_runtime_env(void) {
+    NSString *root=default_runtime_root();
+    if(!getenv("BMF_RUNTIME_DIR"))setenv("BMF_RUNTIME_DIR",root.fileSystemRepresentation,1);
+    if(!getenv("ENDFIELD_AO_PATCHES_PATH"))
+        setenv("ENDFIELD_AO_PATCHES_PATH",[root stringByAppendingPathComponent:@"endfield-ios-ao-patches.json"].fileSystemRepresentation,1);
+    if(!getenv("ENDFIELD_CHARACTER_SKIN_PATH"))
+        setenv("ENDFIELD_CHARACTER_SKIN_PATH",[root stringByAppendingPathComponent:@"endfield-ios-character-skin.json"].fileSystemRepresentation,1);
+    if(!getenv("ENDFIELD_OFFICIAL_GTAO_PATH"))
+        setenv("ENDFIELD_OFFICIAL_GTAO_PATH",[root stringByAppendingPathComponent:@"endfield-official-gtao"].fileSystemRepresentation,1);
+}
 static NSString *runtime_path(NSString *name) {
-    NSString *root=NSProcessInfo.processInfo.environment[@"BMF_RUNTIME_DIR"] ?: NSTemporaryDirectory();
+    const char *env=getenv("BMF_RUNTIME_DIR");
+    NSString *root=env ? @(env) : default_runtime_root();
     return [root stringByAppendingPathComponent:name];
 }
 static uint32_t override_volume_handle,override_profile_handle;
@@ -82,6 +103,7 @@ static void core_start(void) {
 __attribute__((constructor)) static void core_install(void) {
     @autoreleasepool {
         probe_cn_client=[NSBundle.mainBundle.bundleIdentifier isEqual:@"com.hypergryph.endfield"];
+        ensure_runtime_env();
         output=fopen(runtime_path(@"bettermacfield-runtime.log").fileSystemRepresentation,"w");if(!output)return;
         setvbuf(output,NULL,_IOLBF,0);
         fprintf(output,"core=starting pid=%d\n",getpid());

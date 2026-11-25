@@ -39,7 +39,8 @@ def main():
     payload = {str(p.relative_to(resources)):hashlib.sha256(p.read_bytes()).hexdigest() for p in (resources/'Graphics').rglob('*') if p.is_file()}
     payload.update({str(p.relative_to(resources)):hashlib.sha256(p.read_bytes()).hexdigest() for p in (resources/'Vegetation').rglob('*') if p.is_file()})
     payload['features.json'] = hashlib.sha256((resources/'features.json').read_bytes()).hexdigest()
-    profiles = {region: dict(bundleID=bundle, version='1.6.3')
+    # Version map is defined once in bettermacfield.py (CN 1.7.2, global 1.6.3).
+    profiles = {region: dict(bundleID=bundle, version=bmf.CLIENT_VERSIONS[region])
                 for region, bundle in bmf.CLIENTS.items()}
     (resources/'clients.json').write_text(json.dumps(dict(clients=profiles, displaySettings=bmf.DISPLAY_SETTINGS,
         runtimeSHA256=hashlib.sha256(library.read_bytes()).hexdigest(), payload=payload), indent=2)+'\n')
